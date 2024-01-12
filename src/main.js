@@ -12,8 +12,11 @@ const API_KEY = '41747369-46a857856bf510ac3748d6666';
 
 searchForm.addEventListener('submit', event => {
   event.preventDefault();
+  galleryRef.innerHTML = '';
+
   spanLoader.classList.add('loader');
   const query = event.currentTarget.elements.query.value;
+
   const searchParams = new URLSearchParams({
     key: API_KEY,
     q: query,
