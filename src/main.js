@@ -5,8 +5,6 @@ import 'izitoast/dist/css/iziToast.min.css';
 
 // refresh() Бібліотека містить метод [refresh()](https://github.com/andreknieriem/simplelightbox#public-methods), який обов'язково потрібно викликати щоразу після додавання нових елементів до галереї.
 const searchForm = document.querySelector('.search-form');
-const btnRef = document.querySelector('.btn-search');
-const inputRef = document.querySelector('.input-search');
 const galleryRef = document.querySelector('.gallery');
 const loader = document.querySelector('.loader');
 
@@ -24,14 +22,60 @@ searchForm.addEventListener('submit', event => {
     orientation: 'horizontal',
     safesearch: true,
   });
+  renderImages(searchParams);
+  searchForm.reset();
+});
 
-  fetch(`${BASE_URL}?${searchParams}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(response.status);
-      }
+const getImages = searchParams => {
+  return fetch(`${BASE_URL}?${searchParams}`).then(response => {
+    if (response.ok) {
       return response.json();
-    })
+    } else {
+      throw new Error(
+        'Sorry, there are no images matching your search query. Please try again!'
+      );
+    }
+  });
+};
+
+const getImagesHTML = images =>
+  images.hits.reduce(
+    (html, img) =>
+      html +
+      `<li class="img-item">
+  <a class="img-link" href="${img.largeImageURL}">
+    <img
+      class="images"
+      src="${img.webformatURL}"
+      data-source="${img.largeImageURL}"
+      alt="${img.tags}"
+      width="360"
+      height="200"
+  /></a>
+<div class="description">
+  <div>
+    <p><b>Likes</b></p>
+    <p>${img.likes}</p>
+  </div>
+  <div>
+    <p><b>Views</b></p>
+    <p>${img.views}</p>
+  </div>
+  <div>
+    <p><b>Comments</b></p>
+    <p>${img.comments}</p>
+  </div>
+  <div>
+    <p><b>Downloads</b></p>
+    <p>${img.downloads}</p>
+  </div>
+</div>
+</li>`,
+    ''
+  );
+
+function renderImages(searchParams) {
+  getImages(searchParams)
     .then(images => {
       const lightbox = new SimpleLightbox('.gallery a', {
         captionsData: 'alt',
@@ -39,12 +83,8 @@ searchForm.addEventListener('submit', event => {
         close: true,
       });
 
-      galleryRef.innerHTML = images.hits.reduce(
-        (html, img) =>
-          html +
-          `<li><a href='${img.largeImageURL}'></a><img src='${img.webformatURL}' /></li>`,
-        ''
-      );
+      galleryRef.insertAdjacentHTML('afterbegin', getImagesHTML(images));
+
       lightbox.refresh();
     })
     .catch(error =>
@@ -53,4 +93,4 @@ searchForm.addEventListener('submit', event => {
         position: 'topRight',
       })
     );
-});
+}
