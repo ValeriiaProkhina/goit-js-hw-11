@@ -3,17 +3,16 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
-// refresh() Бібліотека містить метод [refresh()](https://github.com/andreknieriem/simplelightbox#public-methods), який обов'язково потрібно викликати щоразу після додавання нових елементів до галереї.
 const searchForm = document.querySelector('.search-form');
 const galleryRef = document.querySelector('.gallery');
-const loader = document.querySelector('.loader');
+const spanLoader = document.querySelector('.span-loader');
 
-const BASE_URL = 'https://pixabay.com/api';
+const BASE_URL = 'https://pixabay.com/api/';
 const API_KEY = '41747369-46a857856bf510ac3748d6666';
 
 searchForm.addEventListener('submit', event => {
   event.preventDefault();
-
+  spanLoader.classList.add('loader');
   const query = event.currentTarget.elements.query.value;
   const searchParams = new URLSearchParams({
     key: API_KEY,
@@ -43,6 +42,7 @@ const getImagesHTML = images =>
     (html, img) =>
       html +
       `<li class="img-item">
+      <div class="img">
   <a class="img-link" href="${img.largeImageURL}">
     <img
       class="images"
@@ -51,9 +51,9 @@ const getImagesHTML = images =>
       alt="${img.tags}"
       width="360"
       height="200"
-  /></a>
+  /></a></div>
 <div class="description">
-  <div>
+  <div class="category">
     <p><b>Likes</b></p>
     <p>${img.likes}</p>
   </div>
@@ -77,14 +77,16 @@ const getImagesHTML = images =>
 function renderImages(searchParams) {
   getImages(searchParams)
     .then(images => {
+      if (images.hits.length === 0)
+        throw new Error(
+          'Sorry, there are no images matching your search query. Please try again!'
+        );
       const lightbox = new SimpleLightbox('.gallery a', {
         captionsData: 'alt',
         captionDelay: 250,
         close: true,
       });
-
       galleryRef.insertAdjacentHTML('afterbegin', getImagesHTML(images));
-
       lightbox.refresh();
     })
     .catch(error =>
@@ -92,5 +94,8 @@ function renderImages(searchParams) {
         message: error.message,
         position: 'topRight',
       })
-    );
+    )
+    .finally(() => {
+      spanLoader.classList.remove('loader');
+    });
 }
